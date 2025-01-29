@@ -25,7 +25,7 @@ export default function NameScreen() {
         />
         <TouchableOpacity
           className="mt-4 bg-blue-500 p-4 rounded-lg w-full items-center"
-          onPress={() => router.push("/registration/profile-pic")}
+          onPress={() => router.push("/profile-pic")}
           disabled={!name}
         >
           <Text className="text-white text-lg">Próximo</Text>
