@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { View, Text, TouchableOpacity, Image } from 'react-native';
-import { useGlobalSearchParams, useRouter,  } from 'expo-router';  
+import { useLocalSearchParams, useRouter,  } from 'expo-router';  
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 
@@ -9,7 +9,7 @@ export default function RegistrationPhoto() {
   const router = useRouter();
   
 
-  const { name } = useGlobalSearchParams();  
+  const { name } = useLocalSearchParams();  
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({

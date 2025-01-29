@@ -1,9 +1,9 @@
-import { View, Text, ScrollView, TouchableOpacity, Image, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../../contexts/AuthContext';
-import React, { useState, useEffect, useCallback } from 'react';
-import { getFinancialSummary } from '../../lib/api';
+import { useAuth } from '../../contexts/AuthContext'; // Contexto de autenticação
+import React, { useState, useEffect } from 'react';
+import { getFinancialSummary } from '../../lib/api'; // Função para buscar o resumo financeiro
 
 export default function FinancialSummary() {
   const router = useRouter();
@@ -11,37 +11,28 @@ export default function FinancialSummary() {
   const [financialData, setFinancialData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
-
-  const loadFinancialSummary = async () => {
-    try {
-      setLoading(true);
-      const data = await getFinancialSummary();
-      console.log('Dados financeiros carregados:', data);
-      if (data) {
-        setFinancialData(data);
-      } else {
-        setError('Nenhum dado financeiro encontrado.');
-      }
-    } catch (err) {
-      setError('Erro ao carregar os dados financeiros. Tente novamente mais tarde.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
+    const loadFinancialSummary = async () => {
+      try {
+        const data = await getFinancialSummary();
+        console.log('Dados financeiros carregados:', data); // Debugging
+        if (data) {
+          setFinancialData(data);
+        } else {
+          setError('Nenhum dado financeiro encontrado.');
+        }
+      } catch (err) {
+        setError('Erro ao carregar os dados financeiros. Tente novamente mais tarde.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
     if (user?.token) {
       loadFinancialSummary();
     }
   }, [user?.token]);
-
-  // Função para atualizar os dados ao puxar para baixo
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await loadFinancialSummary();
-    setRefreshing(false);
-  }, []);
 
   if (loading) {
     return (
@@ -59,6 +50,7 @@ export default function FinancialSummary() {
     );
   }
 
+  // Se os dados estiverem disponíveis
   const income = financialData?.renda || 0;
   const fixedExpenses = financialData?.gastosFixos || 0;
   const variableExpenses = financialData?.gastosVariaveis || 0;
@@ -66,10 +58,7 @@ export default function FinancialSummary() {
 
   return (
     <SafeAreaView className="flex-1">
-      <ScrollView 
-        className="flex-1"
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-      >
+      <ScrollView className="flex-1">
         <View className="p-6">
           <View className="flex-row justify-between items-center mb-6">
             <Text className="text-2xl font-bold text-gray-800">Resumo Financeiro</Text>

@@ -13,8 +13,12 @@ export default function NameScreen() {
       setError("Nome deve ter pelo menos 3 caracteres");
       return;
     }
-    // Navegar para a próxima tela após a validação do nome
-    router.push("/profile-pic");
+
+    // Navegar para a próxima tela e passar o nome como parâmetro
+    router.push({
+      pathname: "/profile-pic",
+      params: { name }, // Passa o nome como parâmetro para a próxima tela
+    });
   }
 
   return (
@@ -37,7 +41,7 @@ export default function NameScreen() {
             setError(""); // Limpar erro se o texto mudar
           }}
         />
-        {error ? <Text style={styles.error}>{error}</Text> : null}
+        {error && <Text style={styles.error}>{error}</Text>}
 
         <TouchableOpacity
           style={[styles.button, { opacity: name.trim() ? 1 : 0.5 }]}

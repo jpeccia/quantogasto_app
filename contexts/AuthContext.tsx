@@ -1,8 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { getAuthToken, storeAuthToken, removeAuthToken, getUserData, storeUserData } from '../lib/storage';
-import { auth } from '../lib/api';
+import { getAuthToken, storeAuthToken, removeAuthToken, getUserData, storeUserData, removeUserData } from '../lib/storage';
+import { createUser } from '@/lib/api';
+import { View, Text } from 'react-native';
 
 type User = {
+  id: number;
+  token?: string;
   name: string;
   photo?: string;
   occupation?: string;
@@ -38,6 +41,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (token && userData) {
         setIsAuthenticated(true);
         setUser(userData);
+      } else {
+        setIsAuthenticated(false);
+        setUser(null);
       }
     } finally {
       setIsLoading(false);
@@ -45,23 +51,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function register(userData: any) {
-    const response = await auth.register(userData);
-    await storeAuthToken(response.token);
-    await storeUserData(response.user);
-    setIsAuthenticated(true);
-    setUser(response.user);
-  }
+    const response = await createUser({
+      nome: userData.name,
+      foto_perfil: userData.photo || '',
+      cargo: userData.occupation || '',
+      renda: userData.income,
+    });
 
-  async function login(credentials: any) {
-    const response = await auth.login(credentials);
-    await storeAuthToken(response.token);
-    await storeUserData(response.user);
+    const token = response.token;
+    const newUser: User = { ...response.id, token };
+
+    await storeAuthToken(token);
+    await storeUserData(newUser);
+
     setIsAuthenticated(true);
-    setUser(response.user);
+    setUser(newUser);
   }
 
   async function logout() {
     await removeAuthToken();
+    await removeUserData();
+    
     setIsAuthenticated(false);
     setUser(null);
   }
@@ -81,20 +91,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         user,
         register,
-        login,
+        login: async () => {},
         logout,
         updateUser,
       }}
     >
-      {children}
+      {isLoading ? (
+        <View className="flex-1 justify-center items-center">
+          <Text className="text-white">Carregando...</Text> {/* Texto dentro de <Text> */}
+        </View>
+      ) : (
+        children
+      )}
     </AuthContext.Provider>
   );
 }
 
-export function useAuth() {
+export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+  if (!context) {
+    throw new Error("useAuth deve ser usado dentro do AuthProvider");
   }
   return context;
-}
+};
