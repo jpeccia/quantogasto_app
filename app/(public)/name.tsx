@@ -32,7 +32,14 @@ export default function NameScreen() {
         <Text style={styles.title}>Qual é o seu nome?</Text>
 
         <TextInput
-          style={styles.input}
+          style={{
+            backgroundColor: '#fff',
+            padding: 16,
+            borderRadius: 8,
+            marginBottom: 16,
+            borderWidth: 1,
+            borderColor: '#ccc',
+          }}
           placeholder="Digite seu nome"
           placeholderTextColor="#bbb"
           value={name}
@@ -60,7 +67,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#1a1a1a", // Fundo escuro para a tela
+    backgroundColor: "#fff", // Fundo escuro para a tela
     padding: 24,
   },
   motiView: {
@@ -69,7 +76,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#ffffff",
+    color: "#1a1a1a'",
     marginBottom: 12,
     textAlign: "center",
   },

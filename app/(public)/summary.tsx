@@ -1,152 +1,115 @@
-import { View, Text, ScrollView, TouchableOpacity, Image, ActivityIndicator, RefreshControl } from 'react-native';
+// screens/RegistrationSummary.tsx
+
+import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { useAuth } from '../../contexts/AuthContext';
-import React, { useState, useEffect, useCallback } from 'react';
-import { getFinancialSummary } from '../../lib/api';
+import { useRouter, useGlobalSearchParams } from 'expo-router';  // Usando expo-router para navegação
+import { createUser } from '../../lib/api';  // Importando a função da API
+import { useState } from 'react';
 
-export default function FinancialSummary() {
+export default function RegistrationSummary() {
   const router = useRouter();
-  const { user } = useAuth();
-  const [financialData, setFinancialData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
+  
+  // Usando useGlobalSearchParams para acessar os parâmetros da URL
+  const { name, photo, occupation, income } = useGlobalSearchParams();  // Acessando os parâmetros 'name', 'photo', 'occupation', 'income'
 
-  const loadFinancialSummary = async () => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Garantir que os parâmetros sejam do tipo string (não string[])
+  const userName = Array.isArray(name) ? name[0] : name; // Se name for um array, pega o primeiro item
+  const userPhoto = Array.isArray(photo) ? photo[0] : photo; // Verificar photo também
+  const userOccupation = Array.isArray(occupation) ? occupation[0] : occupation; // Verificar occupation
+  const userIncome = Array.isArray(income) ? income[0] : income; // Verificar income
+
+  // Definindo parsedIncome
+  const parsedIncome = parseFloat(userIncome || '0');  // Convertendo 'userIncome' para número
+
+  const handleStart = async () => {
+    setLoading(true);
+    setError(null);
+
+    // Certifique-se de que os parâmetros não sejam indefinidos
+    if (!userName || isNaN(parsedIncome)) {
+      setError('Nome e Renda são obrigatórios para iniciar!');
+      setLoading(false);
+      return;
+    }
+
     try {
-      setLoading(true);
-      const data = await getFinancialSummary();
-      console.log('Dados financeiros carregados:', data);
-      if (data) {
-        setFinancialData(data);
+      const response = await createUser({
+        nome: userName,                  // 'nome' como string
+        foto_perfil: userPhoto!,         // 'foto_perfil' como string
+        cargo: userOccupation || '',     // 'cargo' como string (pode ser vazio)
+        renda: parsedIncome,             // 'renda' como número
+      });
+
+      if (response.token) {
+        console.log('Conta criada com sucesso!', response);
+        // Navegar para a tela principal após a criação da conta
+        router.push('/home');
       } else {
-        setError('Nenhum dado financeiro encontrado.');
+        setError('Erro ao criar conta. Tente novamente.');
       }
     } catch (err) {
-      setError('Erro ao carregar os dados financeiros. Tente novamente mais tarde.');
+      setError('Erro ao criar conta. Tente novamente.');
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (user?.token) {
-      loadFinancialSummary();
-    }
-  }, [user?.token]);
-
-  // Função para atualizar os dados ao puxar para baixo
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await loadFinancialSummary();
-    setRefreshing(false);
-  }, []);
-
-  if (loading) {
-    return (
-      <SafeAreaView className="flex-1 justify-center items-center">
-        <ActivityIndicator size="large" color="#0000ff" />
-      </SafeAreaView>
-    );
-  }
-
-  if (error || !financialData) {
-    return (
-      <SafeAreaView className="flex-1 justify-center items-center p-6">
-        <Text className="text-red-500 font-bold text-center">{error || 'Erro desconhecido.'}</Text>
-      </SafeAreaView>
-    );
-  }
-
-  const income = financialData?.renda || 0;
-  const fixedExpenses = financialData?.gastosFixos || 0;
-  const variableExpenses = financialData?.gastosVariaveis || 0;
-  const balance = income - fixedExpenses - variableExpenses;
-
   return (
-    <SafeAreaView className="flex-1">
-      <ScrollView 
-        className="flex-1"
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-      >
-        <View className="p-6">
-          <View className="flex-row justify-between items-center mb-6">
-            <Text className="text-2xl font-bold text-gray-800">Resumo Financeiro</Text>
-            <TouchableOpacity
-              onPress={() => router.push('/profile')}
-              className="w-10 h-10 rounded-full overflow-hidden border-2 border-blue-500"
-            >
-              {user?.photo ? (
-                <Image source={{ uri: user.photo }} className="w-full h-full" />
-              ) : (
-                <View className="w-full h-full bg-blue-100 items-center justify-center">
-                  <Text className="text-blue-500 font-bold">
-                    {user?.name?.[0]?.toUpperCase() || 'U'}
-                  </Text>
-                </View>
-              )}
-            </TouchableOpacity>
+    <SafeAreaView style={{ flex: 1 }}>
+      <View style={{ padding: 24, flex: 1 }}>
+        <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 16, color: '#1a1a1a' }}>
+          Resumo
+        </Text>
+        
+        <View style={{ backgroundColor: '#fff', borderRadius: 8, padding: 16, marginBottom: 24 }}>
+          {userPhoto && (
+            <Image
+              source={{ uri: userPhoto }} // Verificando se é um array e pegando o primeiro item
+              style={{ width: 80, height: 80, borderRadius: 40, marginBottom: 16, alignSelf: 'center' }}
+            />
+          )}
+          
+          <View style={{ marginBottom: 16 }}>
+            <Text style={{ color: '#666' }}>Nome:</Text>
+            <Text style={{ fontSize: 18 }}>{userName}</Text>
           </View>
 
-          {/* Card de Saldo */}
-          <View className="bg-blue-500 p-6 rounded-lg mb-6">
-            <Text className="text-white text-sm mb-2">Saldo Disponível</Text>
-            <Text className="text-white text-3xl font-bold">
+          <View style={{ marginBottom: 16 }}>
+            <Text style={{ color: '#666' }}>Ocupação:</Text>
+            <Text style={{ fontSize: 18 }}>{userOccupation || 'Não informado'}</Text>
+          </View>
+
+          <View style={{ marginBottom: 16 }}>
+            <Text style={{ color: '#666' }}>Renda Mensal:</Text>
+            <Text style={{ fontSize: 18 }}>
               {new Intl.NumberFormat('pt-BR', {
                 style: 'currency',
                 currency: 'BRL',
-              }).format(balance)}
-            </Text>
-          </View>
-
-          {/* Cards de Renda e Gastos Totais */}
-          <View className="flex-row gap-4 mb-6">
-            <View className="flex-1 bg-white p-4 rounded-lg">
-              <Text className="text-gray-600 text-sm mb-1">Renda</Text>
-              <Text className="text-green-600 font-bold">
-                {new Intl.NumberFormat('pt-BR', {
-                  style: 'currency',
-                  currency: 'BRL',
-                }).format(income)}
-              </Text>
-            </View>
-
-            <View className="flex-1 bg-white p-4 rounded-lg">
-              <Text className="text-gray-600 text-sm mb-1">Gastos Totais</Text>
-              <Text className="text-red-600 font-bold">
-                {new Intl.NumberFormat('pt-BR', {
-                  style: 'currency',
-                  currency: 'BRL',
-                }).format(fixedExpenses + variableExpenses)}
-              </Text>
-            </View>
-          </View>
-
-          {/* Detalhamento dos Gastos */}
-          <Text className="text-xl font-bold mb-4 text-gray-800">Detalhamento</Text>
-
-          <View className="bg-white rounded-lg p-4 mb-4">
-            <Text className="text-gray-600 mb-2">Gastos Fixos</Text>
-            <Text className="text-2xl font-bold text-gray-800">
-              {new Intl.NumberFormat('pt-BR', {
-                style: 'currency',
-                currency: 'BRL',
-              }).format(fixedExpenses)}
-            </Text>
-          </View>
-
-          <View className="bg-white rounded-lg p-4">
-            <Text className="text-gray-600 mb-2">Gastos Variáveis</Text>
-            <Text className="text-2xl font-bold text-gray-800">
-              {new Intl.NumberFormat('pt-BR', {
-                style: 'currency',
-                currency: 'BRL',
-              }).format(variableExpenses)}
+              }).format(parsedIncome)}
             </Text>
           </View>
         </View>
-      </ScrollView>
+
+        {error && (
+          <Text style={{ color: 'red', textAlign: 'center', marginBottom: 16 }}>
+            {error}
+          </Text>
+        )}
+
+        <TouchableOpacity
+          style={{ padding: 16, backgroundColor: '#3b82f6', borderRadius: 8 }}
+          onPress={handleStart}
+          disabled={loading}
+        >
+          <Text style={{ color: '#fff', fontWeight: 'bold', textAlign: 'center', textTransform: 'uppercase' }}>
+            {loading ? 'Criando...' : 'Começar'}
+          </Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }
