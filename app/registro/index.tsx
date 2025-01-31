@@ -1,89 +1,73 @@
-import { Stack, useRouter } from 'expo-router';
-import { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity } from 'react-native';
+import { useRouter } from 'expo-router';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import { registrarUsuario } from '../../services/api';
+import { useState } from 'react';
 
 export default function RegistroScreen() {
   const router = useRouter();
-  const [etapa, setEtapa] = useState('nome'); // 'nome', 'perfil', 'cargo', 'renda'
+  const [nome, setNome] = useState('');
+  const [fotoPerfil, setFotoPerfil] = useState<string | null>(null);
+  const [cargo, setCargo] = useState('');
+  const [renda, setRenda] = useState('');
 
-  const avancarEtapa = () => {
-    if (etapa === 'nome') setEtapa('perfil');
-    else if (etapa === 'perfil') setEtapa('cargo');
-    else if (etapa === 'cargo') setEtapa('renda');
-    else if (etapa === 'renda') router.replace('/resumo');
+  const finalizarRegistro = async () => {
+    if (!nome.trim() || !renda.trim()) {
+      alert('Por favor, preencha todos os campos obrigatórios.');
+      return;
+    }
+
+    const dadosUsuario = {
+      nome,
+      fotoPerfil,
+      cargo,
+      renda: parseFloat(renda),
+    };
+
+    try {
+      await registrarUsuario(dadosUsuario);
+      router.replace('/resumo');
+    } catch (error) {
+      console.error('Erro ao registrar usuário:', error);
+    }
   };
 
   return (
     <View className="flex-1 justify-center items-center bg-background p-6">
-      <Stack.Screen options={{ headerShown: false }} />
+      <Animated.View entering={FadeIn} exiting={FadeOut} className="w-full">
+        <View className="glass p-6 rounded-2xl">
+          <Text className="text-2xl font-bold text-primary mb-8">Cadastro</Text>
 
-      {etapa === 'nome' && (
-        <Animated.View entering={FadeIn} exiting={FadeOut} className="w-full">
-          <Text className="text-2xl font-bold text-primary mb-8">Qual é o seu nome?</Text>
           <TextInput
-            className="bg-white p-4 rounded-2xl shadow-lg w-full mb-4"
+            className="neomorph p-4 rounded-2xl w-full mb-4"
             placeholder="Nome"
+            value={nome}
+            onChangeText={setNome}
           />
-          <TouchableOpacity
-            className="bg-accent p-4 rounded-2xl shadow-lg w-full"
-            onPress={avancarEtapa}
-          >
-            <Text className="text-lg text-white text-center">Avançar</Text>
-          </TouchableOpacity>
-        </Animated.View>
-      )}
 
-      {etapa === 'perfil' && (
-        <Animated.View entering={FadeIn} exiting={FadeOut} className="w-full">
-          <Text className="text-2xl font-bold text-primary mb-8">Adicione uma foto de perfil (opcional)</Text>
-          <TouchableOpacity
-            className="bg-white p-4 rounded-2xl shadow-lg w-full mb-4"
-            onPress={() => console.log('Abrir seletor de fotos')}
-          >
-            <Text className="text-lg text-text text-center">Escolher Foto</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            className="bg-accent p-4 rounded-2xl shadow-lg w-full"
-            onPress={avancarEtapa}
-          >
-            <Text className="text-lg text-white text-center">Pular</Text>
-          </TouchableOpacity>
-        </Animated.View>
-      )}
-
-      {etapa === 'cargo' && (
-        <Animated.View entering={FadeIn} exiting={FadeOut} className="w-full">
-          <Text className="text-2xl font-bold text-primary mb-8">Qual é o seu cargo? (opcional)</Text>
           <TextInput
-            className="bg-white p-4 rounded-2xl shadow-lg w-full mb-4"
-            placeholder="Cargo"
+            className="neomorph p-4 rounded-2xl w-full mb-4"
+            placeholder="Cargo (opcional)"
+            value={cargo}
+            onChangeText={setCargo}
           />
-          <TouchableOpacity
-            className="bg-accent p-4 rounded-2xl shadow-lg w-full"
-            onPress={avancarEtapa}
-          >
-            <Text className="text-lg text-white text-center">Pular</Text>
-          </TouchableOpacity>
-        </Animated.View>
-      )}
 
-      {etapa === 'renda' && (
-        <Animated.View entering={FadeIn} exiting={FadeOut} className="w-full">
-          <Text className="text-2xl font-bold text-primary mb-8">Qual é a sua renda mensal?</Text>
           <TextInput
-            className="bg-white p-4 rounded-2xl shadow-lg w-full mb-4"
+            className="neomorph p-4 rounded-2xl w-full mb-4"
             placeholder="Renda"
             keyboardType="numeric"
+            value={renda}
+            onChangeText={setRenda}
           />
+
           <TouchableOpacity
             className="bg-accent p-4 rounded-2xl shadow-lg w-full"
-            onPress={avancarEtapa}
+            onPress={finalizarRegistro}
           >
-            <Text className="text-lg text-white text-center">Finalizar</Text>
+            <Text className="text-lg text-white text-center">Finalizar Cadastro</Text>
           </TouchableOpacity>
-        </Animated.View>
-      )}
+        </View>
+      </Animated.View>
     </View>
   );
 }
