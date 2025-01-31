@@ -1,4 +1,5 @@
-import AsyncStorage from '@react-native-async-storage/async-storage/lib/typescript/AsyncStorage';
+
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
 
@@ -23,17 +24,31 @@ export const registrarUsuario = async (dadosUsuario: {
 };
 
 // Função para obter o resumo financeiro
-export const obterResumo = async (usuarioId: number) => {
+export const obterResumo = async () => {
   try {
-    const response = await api.get(`/resumo`, {
-      headers: { Authorization: `Bearer ${await AsyncStorage.getItem('token')}` },
+    // Obtendo o token armazenado no AsyncStorage
+    const token = await AsyncStorage.getItem('token');
+    
+    // Verificando se o token existe
+    if (!token) {
+      throw new Error('Token não encontrado');
+    }
+
+    // Fazendo a requisição para obter o resumo financeiro
+    const response = await api.get('/resumo', {
+      headers: {
+        Authorization: `Bearer ${token}`, // Adicionando o token ao cabeçalho
+      },
     });
+
+    // Retornando os dados da resposta
     return response.data;
   } catch (error) {
     console.error('Erro ao obter resumo:', error);
-    throw error;
+    throw error; // Propagando o erro
   }
 };
+
 
 // Função para adicionar um gasto fixo
 export const adicionarGastoFixo = async (dadosGasto: {

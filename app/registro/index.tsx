@@ -1,8 +1,9 @@
 import { View, Text, TextInput, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
-import { registrarUsuario } from '../../services/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useState } from 'react';
+import { registrarUsuario } from '@/services/api';
 
 export default function RegistroScreen() {
   const router = useRouter();
@@ -16,22 +17,22 @@ export default function RegistroScreen() {
       alert('Por favor, preencha todos os campos obrigatórios.');
       return;
     }
-
+  
     const dadosUsuario = {
       nome,
       fotoPerfil,
       cargo,
       renda: parseFloat(renda),
     };
-
+  
     try {
-      await registrarUsuario(dadosUsuario);
+      const response = await registrarUsuario(dadosUsuario);
+      await AsyncStorage.setItem('token', response.token); // Armazena o token
       router.replace('/resumo');
     } catch (error) {
       console.error('Erro ao registrar usuário:', error);
     }
   };
-
   return (
     <View className="flex-1 justify-center items-center bg-background p-6">
       <Animated.View entering={FadeIn} exiting={FadeOut} className="w-full">
